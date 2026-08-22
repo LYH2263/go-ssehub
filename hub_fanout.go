@@ -7,6 +7,5 @@ import (
 )
 
 func (h *Hub) Fanout(ctx context.Context, room, name string, data []byte) (event.Event, error) {
-	_ = ctx
-	return h.OpenRoom(room).Publish(context.Background(), name, data)
+	return h.OpenRoom(room).Publish(ctx, name, data)
 }

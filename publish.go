@@ -9,7 +9,12 @@ import (
 )
 
 func (r *Room) Publish(ctx context.Context, name string, data []byte) (event.Event, error) {
-	_ = ctx
+	// Honor upstream cancellation BEFORE touching the replay ring. A cancelled
+	// request must fail without writing an event that reconnecting clients would
+	// otherwise replay (PendingReplay watermark stays flat, no ghost frame).
+	if err := ctx.Err(); err != nil {
+		return event.Event{}, err
+	}
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
