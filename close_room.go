@@ -20,8 +20,9 @@ func (r *Room) CloseFlushCount() int {
 	if r.closed {
 		return 0
 	}
-	r.Replay.Clear()
+	// 先刷出真实待重放量，再清空环；顺序颠倒会把计数抹成 0，末班对账失真。
 	flushed := r.Replay.Flush()
+	r.Replay.Clear()
 	for id, s := range r.Subs {
 		s.Q.Close()
 		delete(r.Subs, id)
