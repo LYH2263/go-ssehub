@@ -18,15 +18,15 @@ func (r *Room) Subscribe(ctx context.Context, subID string, lastID int64, qCap i
 	if _, ok := r.Subs[subID]; ok {
 		return nil, ErrConflict
 	}
+	if r.Enc == nil {
+		return nil, fmt.Errorf("%w: encoder", ErrInvalid)
+	}
 	q := backpressure.New(qCap)
 	r.Subs[subID] = &Sub{ID: subID, Room: r.Name, Q: q}
 	r.subOrder = append(r.subOrder, subID)
 	for _, ev := range r.Replay.After(lastID) {
 		frame := r.Enc.Encode(ev)
 		_ = q.Push(frame)
-	}
-	if r.Enc == nil {
-		return nil, fmt.Errorf("%w: encoder", ErrInvalid)
 	}
 	return q.Chan(), nil
 }
