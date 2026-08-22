@@ -11,6 +11,11 @@ func (r *Room) Close() {
 		delete(r.Subs, id)
 	}
 	r.subOrder = nil
+	// Mark the room closed with an explicit flag. The closed *state* must be
+	// decided by r.closed, never inferred from r.Replay being nil/empty:
+	// Publish checks r.closed before touching r.Replay, so nil-ing Replay here
+	// is a cleanup, not the close signal. (See publish.go and the
+	// publish_close_test.go regression.)
 	r.Replay = nil
 	r.closed = true
 }

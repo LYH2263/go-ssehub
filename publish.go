@@ -14,7 +14,13 @@ func (r *Room) Publish(ctx context.Context, name string, data []byte) (event.Eve
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	// closed check removed
+	// Closed state is decided by the flag, never by the replay buffer being
+	// empty/nil. Checking r.closed first also guarantees r.Replay is still
+	// non-nil here, so a closed room returns a decidable error instead of
+	// nil-derefing r.Replay.Append below.
+	if r.closed {
+		return event.Event{}, ErrClosed
+	}
 
 	if r.Enc == nil {
 		return event.Event{}, fmt.Errorf("%w: encoder", ErrInvalid)
