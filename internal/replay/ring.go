@@ -64,3 +64,20 @@ func (r *Ring) Len() int {
 	defer r.mu.Unlock()
 	return len(r.buf)
 }
+
+func (r *Ring) CloneAll() []event.Event {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	out := make([]event.Event, len(r.buf))
+	for i, ev := range r.buf {
+		out[i] = ev
+		out[i].Data = append([]byte(nil), ev.Data...)
+	}
+	return out
+}
+
+func (r *Ring) AliasAll() []event.Event {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.buf
+}
