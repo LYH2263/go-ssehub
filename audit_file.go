@@ -41,10 +41,17 @@ func (a *fileAudit) Rotate(newPath string) error {
 	if err != nil {
 		return err
 	}
-	// leak
+	// Close the previous file before swapping it out: once rotation
+	// completes the old path must be removable. Leaking the old handle
+	// keeps the process holding the file open, so operators can't delete
+	// the rotated-out path and the directory accumulates forever.
+	var oldErr error
+	if a.f != nil {
+		oldErr = a.f.Close()
+	}
 	a.f = f
 	a.path = newPath
-	return nil
+	return oldErr
 }
 func (a *fileAudit) Close() error {
 	if a == nil {
