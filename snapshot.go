@@ -8,5 +8,5 @@ func (r *Room) SnapshotEvents() []event.Event {
 	if r.Replay == nil {
 		return nil
 	}
-	return r.Replay.AliasAll()
+	return r.Replay.CloneAll()
 }

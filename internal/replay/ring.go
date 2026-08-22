@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"github.com/LYH2263/go-ssehub/internal/clone"
 	"github.com/LYH2263/go-ssehub/internal/event"
 	"sync"
 )
@@ -23,10 +24,14 @@ func (r *Ring) Append(ev event.Event) event.Event {
 	defer r.mu.Unlock()
 	r.next++
 	ev.ID = r.next
+	// Hold an independent copy of Data so later mutations of the caller's
+	// buffer (reused across frames) cannot retroactively dirty the ring.
+	stored := ev
+	stored.Data = clone.Bytes(ev.Data)
 	if len(r.buf) < r.cap {
-		r.buf = append(r.buf, ev)
+		r.buf = append(r.buf, stored)
 	} else {
-		r.buf = append(r.buf[1:], ev)
+		r.buf = append(r.buf[1:], stored)
 	}
 	return ev
 }
@@ -74,10 +79,4 @@ func (r *Ring) CloneAll() []event.Event {
 		out[i].Data = append([]byte(nil), ev.Data...)
 	}
 	return out
-}
-
-func (r *Ring) AliasAll() []event.Event {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.buf
 }
