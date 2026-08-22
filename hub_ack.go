@@ -17,3 +17,14 @@ func (h *Hub) PublishAck(ctx context.Context, room, name string, data []byte) (e
 	}
 	return ev, nil
 }
+
+// CloseAuditFile closes the audit file handle but keeps audit enabled (Log will fail).
+func (h *Hub) CloseAuditFile() error {
+	h.mu.Lock()
+	a := h.audit
+	h.mu.Unlock()
+	if a == nil {
+		return nil
+	}
+	return a.Close()
+}
