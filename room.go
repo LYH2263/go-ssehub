@@ -2,6 +2,7 @@ package ssehub
 
 import (
 	"github.com/LYH2263/go-ssehub/internal/backpressure"
+	"github.com/LYH2263/go-ssehub/internal/clone"
 	"github.com/LYH2263/go-ssehub/internal/event"
 	"github.com/LYH2263/go-ssehub/internal/replay"
 	"sync"
@@ -38,7 +39,13 @@ func (r *Room) SetEncoder(enc event.Encoder) {
 func (r *Room) ListSubscribers() []string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return r.subOrder
+	// Return a defensive copy: callers (console/admin UI) may rewrite an
+	// element to a display alias. Returning the backing slice directly would
+	// mutate the authoritative subscribe-order table, leaking the alias into
+	// ExportRoster and breaking Unsubscribe's subOrder lookup. The true
+	// subscription relationship and its teardown path must not be affected by
+	// presentation copies handed to callers.
+	return clone.Strings(r.subOrder)
 }
 
 func (r *Room) PendingReplay() int {
